@@ -1,0 +1,110 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Feb 12 15:29:43 2019
+
+@author: 14keatt1
+"""
+
+import pandas as pd
+import os
+import numpy as np
+from matplotlib import pyplot as plt
+from scipy.signal import find_peaks
+from scipy.interpolate import interp1d
+
+Folderpath = '/Users/14keatt1/Documents/Imperial/Year3/Project/2019-3-21/gluedown/' 
+
+filenames = os.listdir(Folderpath)
+filenames = [file for file in filenames if '.csv' in file]
+
+def normalisation(pixel, signal):
+    peaks, _  = find_peaks(signal, height=100, distance=10)    
+    peakvalue = []  
+    for peak in peaks:
+#        plt.axvline(x=peak)
+        yvalue = signal[peak]
+        peakvalue.append(yvalue)
+ 
+    f2 = interp1d(peaks, peakvalue, kind='cubic', fill_value='extrapolate')
+    intsig = f2(pixel)
+    print(peaks)
+
+    newsignal = [100*x/y for x,y in zip(signal,intsig)]
+    
+    return intsig, newsignal
+
+def test(file):
+    df = pd.read_csv(file, sep = ",")
+    df.columns=['pixel', 'signal']
+    pixel = df['pixel']
+    signal = df['signal']
+    intsig, newsignal = normalisation(pixel, signal)
+    plt.plot(pixel,signal,'-', label = 'Original Signal')
+    plt.plot(pixel,newsignal,'-', label = 'Normalised Signal')
+    plt.plot(pixel,intsig,'--', label = 'Normalizing Function')
+    
+    plt.axis([400,800,0,200])
+    plt.grid(True)
+    plt.xlabel('Pixel', fontsize=12)
+    plt.ylabel('Pixel Intensity', fontsize=12)
+    plt.legend(loc='best')
+    plt.show()
+
+#test('/Users/14keatt1/Documents/Imperial/Year3/Project/2019-3-20/solderup/09_solder.csv')
+
+def oneplot(filenames):
+#    voltagelabel = 0
+    for file in filenames:
+        df = pd.read_csv(Folderpath + file, sep = ",")
+        df.columns=['pixel', 'signal']
+        pixel = df['pixel']
+        signal = df['signal']
+        intsig, newsignal = normalisation(pixel, signal)
+        plt.plot(pixel,newsignal,'-')#, label = '%dV' %(voltagelabel))
+#        voltagelabel = voltagelabel + 5
+        plt.pause(5)
+        
+    plt.axis([400,800,0,200])
+    plt.grid(True)
+    plt.legend(loc='best')
+    plt.xlabel('Pixel', fontsize=12)
+    plt.ylabel('Grey Value', fontsize=12)
+    plt.show()
+
+def multiplot(filenames):
+    numberoffiles = len(filenames)
+#    voltagelabel = 0
+    filenumber = 0
+    fig, ax = plt.subplots(ncols=1,nrows=numberoffiles,sharex=True,sharey=True,squeeze=False)
+    fig.text(0.5, 0.04, 'Pixel', va='center', ha='center', fontsize=12)
+    fig.text(0.04, 0.5, 'Pixel Intensity', va='center', ha='center', rotation='vertical', fontsize=12)
+    
+    for file in filenames:
+        print(file)
+        filenumber = filenumber + 1
+        df = pd.read_csv(Folderpath + file, sep = ",")
+        df.columns=['pixel', 'signal']
+        pixel = df['pixel']
+        signal = df['signal']
+        intsig, newsignal = normalisation(pixel, signal)
+#        plt.subplot(5,1,filenumber)
+        plt.subplots_adjust(hspace = .0001)
+#        plt.plot(pixel,newsignal,'-')#, label = '%dV' %(voltagelabel))
+        ax[filenumber-1][0].plot(pixel,newsignal,'-')
+        plt.axis([400,800,0,100])
+#        plt.xticks(np.arange(200, 701, 50))
+#        plt.yticks(np.arange(0, 101, 50))
+#        ax[filenumber-1][0].grid(True)
+
+#        if filenumber == 5:
+#            break
+    
+      
+    
+        
+    
+    plt.show()
+
+#oneplot(filenames)
+multiplot(filenames)
